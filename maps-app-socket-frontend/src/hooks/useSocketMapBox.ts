@@ -33,8 +33,6 @@ export const useSocketMapBox = () => {
 
   useEffect(() => {
     movMarker$.subscribe((mark) => {
-      console.log("MapaPage", mark);
-
       socket.emit("update-marker", mark);
     });
   }, [movMarker$]);

@@ -32,32 +32,44 @@ export const useMapbox = (puntoInicial: UseMapboxArgs) => {
   const newMarker = useRef(new Subject());
 
   //Add markers
-  const addMarker = useCallback((e: MapMouseEvent, id?: string) => {
-    const { lng, lat } = e.lngLat || e;
-    const marker = new mapboxgl.Marker();
-    const idBack = id ?? v4();
-    marker.setLngLat([lng, lat]).addTo(map.current!).setDraggable(true);
+  const addMarker = useCallback(
+    (e: MapMouseEvent | MarkerResponse, id?: string) => {
+      let lng,
+        lat = 0;
+      // const { lng, lat } = e.lngLat || e;
+      if ("lngLat" in e) {
+        lng = e.lngLat.lng;
+        lat = e.lngLat.lat;
+      } else {
+        lng = e.lng;
+        lat = e.lat;
+      }
+      const marker = new mapboxgl.Marker();
+      const idBack = id ?? v4();
+      marker.setLngLat([lng, lat]).addTo(map.current!).setDraggable(true);
 
-    markers.current[idBack] = marker;
+      markers.current[idBack] = marker;
 
-    if (!id) {
-      newMarker.current.next({
-        id: idBack,
-        lng,
-        lat,
+      if (!id) {
+        newMarker.current.next({
+          id: idBack,
+          lng,
+          lat,
+        });
+      }
+
+      //movimientos del marker
+      marker.on("drag", (e) => {
+        const { lng, lat } = e.target.getLngLat();
+        movMarker.current.next({
+          id: idBack,
+          lng,
+          lat,
+        });
       });
-    }
-
-    //movimientos del marker
-    marker.on("drag", (e) => {
-      const { lng, lat } = e.target.getLngLat();
-      movMarker.current.next({
-        id: idBack,
-        lng,
-        lat,
-      });
-    });
-  }, []);
+    },
+    []
+  );
 
   const updateMarker = useCallback(({ id, lng, lat }: MarkerResponse) => {
     markers.current[id].setLngLat([lng, lat]);

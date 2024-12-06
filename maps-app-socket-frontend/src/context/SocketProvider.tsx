@@ -6,7 +6,7 @@ interface Props {
 }
 
 export const SocketProvider = ({ children }: Props) => {
-  const { socket, onLine } = useSocket("http://localhost:8080");
+  const { socket, onLine } = useSocket(import.meta.env.VITE_SERVER_URL);
   return (
     <SocketContext.Provider value={{ socket, onLine }}>
       {children}
