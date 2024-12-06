@@ -1,30 +1,53 @@
-import mapboxgl, { Map } from "mapbox-gl";
-import { useLayoutEffect, useRef, useState } from "react";
-
+import { useContext, useEffect } from "react";
+import { useMapbox } from "../hooks/useMapbox";
+import SocketContext from "../context/SocketContex";
+import { Marker } from "mapbox-gl";
 const puntoInicial = {
-  lng: 5,
-  lat: 34,
-  zoom:2.5,
+  lng: -65.28,
+  lat: -24.21,
+  zoom: 13.5,
 };
 
 export const MapPages = () => {
-  const mapDiv = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<Map>();
+  const { mapDiv, coords, newMarker$, movMarker$, addMarker } =
+    useMapbox(puntoInicial);
 
-  useLayoutEffect(() => {
-    if (mapDiv.current) {
-      const map = new mapboxgl.Map({
-        container: mapDiv.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [puntoInicial.lng, puntoInicial.lat],
-        zoom: puntoInicial.zoom,
-      });
-      setMap(map);
-    }
-  }, []);
+  const { socket } = useContext(SocketContext);
+
+  useEffect(() => {
+    socket.on("active-markers", (data) => {
+      //console.log("MapaPage", data);
+
+      for (const key of Object.keys(data)) {
+        console.log(data[key]);
+        addMarker(data[key], key);
+      }
+    });
+  }, [socket, addMarker]);
+
+  useEffect(() => {
+    newMarker$.subscribe((mark) => {
+      socket.emit("new-marker", mark);
+    });
+  }, [newMarker$, socket]);
+
+  useEffect(() => {
+    movMarker$.subscribe((mark) => {
+      console.log("MapaPage", mark);
+    });
+  }, [movMarker$]);
+
+  useEffect(() => {
+    socket.on("new-marker", (marker: Marker) => {
+      addMarker(marker, marker.id);
+    });
+  }, [socket, addMarker]);
 
   return (
     <>
+      <div className="info">
+        Lng: {coords.lng} | Lat: {coords.lat} | Zoom: {coords.zoom}
+      </div>
       <div ref={mapDiv} className="mapContainer"></div>
     </>
   );
