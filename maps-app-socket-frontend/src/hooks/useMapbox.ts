@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { v4 } from "uuid";
-import { Marks } from "../interfaces";
+import { MarkerResponse, Marks } from "../interfaces";
 import { Subject } from "rxjs";
 
 interface UseMapboxArgs {
@@ -40,22 +40,27 @@ export const useMapbox = (puntoInicial: UseMapboxArgs) => {
 
     markers.current[idBack] = marker;
 
-    newMarker.current.next({
-      id:idBack,
-      lng,
-      lat,
-    });
-
     if (!id) {
-      marker.on("drag", (e) => {
-        const { lng, lat } = e.target.getLngLat();
-        movMarker.current.next({
-          id: idBack,
-          lng,
-          lat,
-        });
+      newMarker.current.next({
+        id: idBack,
+        lng,
+        lat,
       });
     }
+
+    //movimientos del marker
+    marker.on("drag", (e) => {
+      const { lng, lat } = e.target.getLngLat();
+      movMarker.current.next({
+        id: idBack,
+        lng,
+        lat,
+      });
+    });
+  }, []);
+
+  const updateMarker = useCallback(({ id, lng, lat }: MarkerResponse) => {
+    markers.current[id].setLngLat([lng, lat]);
   }, []);
 
   useLayoutEffect(() => {
@@ -95,11 +100,13 @@ export const useMapbox = (puntoInicial: UseMapboxArgs) => {
   }, [addMarker]);
 
   return {
-    mapDiv,
     coords,
-    newMarker$: newMarker.current,
-    movMarker$: movMarker.current,
+    mapDiv,
     markers,
+    movMarker$: movMarker.current,
+    newMarker$: newMarker.current,
+
     addMarker,
+    updateMarker,
   };
 };

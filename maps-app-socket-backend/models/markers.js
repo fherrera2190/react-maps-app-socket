@@ -12,9 +12,9 @@ class Markers {
     delete this.actives[id];
   }
 
-  updateMarker(marker) {
-    this.actives[marker.id].lng = marker.lng;
-    this.actives[marker.id].lat = marker.lat;
+  updateMarker({id, lng, lat}) {
+    this.actives[id].lng = lng;
+    this.actives[id].lat = lat;
   }
 }
 
